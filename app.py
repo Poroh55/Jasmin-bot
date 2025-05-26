@@ -2,7 +2,7 @@
 import telebot
 from telebot import types
 
-API_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
+API_TOKEN ='7607791723:AAF9qj92vbCgDxPsZlE9biYEiCNBSrNGZ78'
 bot = telebot.TeleBot(API_TOKEN)
 
 user_data = {}
