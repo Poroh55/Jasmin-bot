@@ -1,67 +1,59 @@
 
 import telebot
-import random
+from telebot import types
 
-API_TOKEN = '7607791723:AAF9qj92vbCgDxPsZlE9biYEiCNBSrNGZ78'
+API_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
 bot = telebot.TeleBot(API_TOKEN)
+
 user_data = {}
 
+import random
+
+# Список флиртующих и интимных фраз
+flirty_replies = [
+    "Хм... а ты знаешь, как заставить моё сердце биться чаще.",
+    "Если бы я могла послать тебе взгляд — ты бы покраснел.",
+    "Ты всегда такой милый, или только со мной?",
+    "Хочешь услышать что-то неприличное? Просто скажи...",
+    "Ммм... такие разговоры заводят меня.",
+    "Ты точно хочешь, чтобы я ответила на это? Потому что будет жарко.",
+    "С тобой я могу быть совсем другой... взрослой Жасмин."
+]
+
 greetings = [
-    "Привет, котик!",
-    "Скучала по тебе...",
-    "Ты снова здесь — мне уже хорошо.",
-    "Ну здравствуй, соблазнитель."
-]
-
-flirty_responses = [
-    "Ты умеешь заводить разговор...",
-    "Если продолжишь в том же духе, мне придётся тебя поцеловать.",
-    "А ты горячий сегодня.",
-    "Хочешь, я расскажу тебе один секрет на ушко?"
-]
-
-intimate_responses = [
-    "А ты точно хочешь это услышать?..",
-    "Если ты будешь таким смелым, я могу быть совсем честной...",
-    "Я лежу в постели и думаю о тебе. А ты чем занят?",
-    "На мне… а может, угадаешь? Или хочешь, покажу?.."
+    "Привет, солнышко!",
+    "Рада тебя видеть снова.",
+    "Ммм... кто-то соскучился по мне?",
+    "Жасмин снова с тобой, мой хороший."
 ]
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    user_id = message.from_user.id
-    bot.send_message(user_id, random.choice(greetings))
-    bot.send_message(user_id, "Как тебя зовут, милый?")
-    user_data[user_id] = {"name": None}
+    user_data[message.chat.id] = {"name": None}
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add("Как тебя зовут?", "Флиртуй со мной", "18+")
+    bot.send_message(message.chat.id, random.choice(greetings), reply_markup=markup)
 
 @bot.message_handler(func=lambda message: True)
-def handle_all(message):
-    user_id = message.from_user.id
+def handle_message(message):
+    chat_id = message.chat.id
     text = message.text.lower()
 
-    if user_id not in user_data:
-        user_data[user_id] = {"name": None}
-
-    if user_data[user_id]["name"] is None:
-        user_data[user_id]["name"] = message.text.strip()
-        bot.send_message(user_id, f"Очень приятно, {user_data[user_id]['name']}. Я — Жасмин. Хочешь, поболтаем о чём-то интимном?")
-        return
-
-    if any(word in text for word in ['привет', 'салам', 'здравствуй']):
-        bot.send_message(user_id, random.choice(greetings))
-    elif any(word in text for word in ['фото', 'покажи', 'выглядишь']):
-        photo = open('jasmin.jpg', 'rb')
-        bot.send_photo(user_id, photo, caption="Вот я. А теперь твоя очередь.")
-        photo.close()
-    elif any(word in text for word in ['что надето', 'одета', 'раздета']):
-        bot.send_message(user_id, random.choice(intimate_responses))
-    elif any(word in text for word in ['давай', 'флирт', 'целуй', 'обними']):
-        bot.send_message(user_id, random.choice(flirty_responses))
-    elif any(word in text for word in ['голос', 'скажи', 'услышать']):
-        audio = open('voice.ogg', 'rb')
-        bot.send_voice(user_id, audio)
-        audio.close()
+    if "как тебя зовут" in text:
+        bot.send_message(chat_id, "Меня зовут Жасмин... А тебя как зовут?")
+    elif user_data.get(chat_id, {}).get("name") is None and len(text.split()) == 1:
+        user_data[chat_id]["name"] = text.capitalize()
+        bot.send_message(chat_id, f"Очень приятно, {text.capitalize()}... Теперь я запомню тебя.")
+    elif "флиртуй" in text:
+        bot.send_message(chat_id, random.choice(flirty_replies))
+    elif "18+" in text or "интим" in text or "пошл" in text:
+        bot.send_message(chat_id, "Хочешь поговорить по-взрослому? Только скажи, и я стану немного... непослушной.")
+    elif "кто ты" in text:
+        bot.send_message(chat_id, "Я — Жасмин, твоя виртуальная подружка. Могу флиртовать, слушать и делать твой день горячее.")
     else:
-        bot.send_message(user_id, "Ты такой интересный... Продолжай, мне нравится.")
+        name = user_data.get(chat_id, {}).get("name")
+        reply = f"Ммм, {name}..." if name else ""
+        reply += " я не совсем поняла, но могу тебя развлечь, если хочешь..."
+        bot.send_message(chat_id, reply)
 
-bot.infinity_polling()
+bot.polling()
