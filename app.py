@@ -2,58 +2,53 @@
 import telebot
 from telebot import types
 
-API_TOKEN ='7607791723:AAF9qj92vbCgDxPsZlE9biYEiCNBSrNGZ78'
+API_TOKEN = '7607791723:AAF9qj92vbCgDxPsZlE9biYEiCNBSrNGZ78'
+
 bot = telebot.TeleBot(API_TOKEN)
 
-user_data = {}
+user_names = {}
 
-import random
-
-# Список флиртующих и интимных фраз
-flirty_replies = [
-    "Хм... а ты знаешь, как заставить моё сердце биться чаще.",
-    "Если бы я могла послать тебе взгляд — ты бы покраснел.",
-    "Ты всегда такой милый, или только со мной?",
-    "Хочешь услышать что-то неприличное? Просто скажи...",
-    "Ммм... такие разговоры заводят меня.",
-    "Ты точно хочешь, чтобы я ответила на это? Потому что будет жарко.",
-    "С тобой я могу быть совсем другой... взрослой Жасмин."
-]
-
-greetings = [
-    "Привет, солнышко!",
-    "Рада тебя видеть снова.",
-    "Ммм... кто-то соскучился по мне?",
-    "Жасмин снова с тобой, мой хороший."
-]
-
+# Стартовое сообщение
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    user_data[message.chat.id] = {"name": None}
+    user_id = message.from_user.id
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("Как тебя зовут?", "Флиртуй со мной", "18+")
-    bot.send_message(message.chat.id, random.choice(greetings), reply_markup=markup)
+    markup.add("Как тебя зовут?", "Пошалим", "Расскажи анекдот", "Покажи фото", "Спроси меня что-нибудь")
+    bot.send_message(user_id, "Привет, я Жасмин. Хочешь познакомиться поближе?", reply_markup=markup)
 
+# Ответы на команды и кнопки
 @bot.message_handler(func=lambda message: True)
-def handle_message(message):
-    chat_id = message.chat.id
+def reply(message):
+    user_id = message.from_user.id
     text = message.text.lower()
 
     if "как тебя зовут" in text:
-        bot.send_message(chat_id, "Меня зовут Жасмин... А тебя как зовут?")
-    elif user_data.get(chat_id, {}).get("name") is None and len(text.split()) == 1:
-        user_data[chat_id]["name"] = text.capitalize()
-        bot.send_message(chat_id, f"Очень приятно, {text.capitalize()}... Теперь я запомню тебя.")
-    elif "флиртуй" in text:
-        bot.send_message(chat_id, random.choice(flirty_replies))
-    elif "18+" in text or "интим" in text or "пошл" in text:
-        bot.send_message(chat_id, "Хочешь поговорить по-взрослому? Только скажи, и я стану немного... непослушной.")
-    elif "кто ты" in text:
-        bot.send_message(chat_id, "Я — Жасмин, твоя виртуальная подружка. Могу флиртовать, слушать и делать твой день горячее.")
+        bot.send_message(user_id, "Я Жасмин. А тебя как зовут?")
+    elif "меня зовут" in text:
+        name = message.text.split("меня зовут")[-1].strip().capitalize()
+        user_names[user_id] = name
+        bot.send_message(user_id, f"Очень приятно, {name}. Хочешь, пошалим?")
+    elif "спроси меня" in text:
+        bot.send_message(user_id, "Что бы ты сделал, если бы я оказалась рядом сейчас?")
+    elif "пошалим" in text:
+        bot.send_message(user_id, "Ты точно готов к этому?.. Я люблю, когда нежно, но с огоньком.")
+    elif "анекдот" in text:
+        bot.send_message(user_id, "— Доктор, у меня постоянно дежавю...
+— Я это уже слышал.")
+    elif "фото" in text:
+        with open("jasmine.jpg", "rb") as photo:
+            bot.send_photo(user_id, photo, caption="Вот как я могу выглядеть, если ты мечтал...")
     else:
-        name = user_data.get(chat_id, {}).get("name")
-        reply = f"Ммм, {name}..." if name else ""
-        reply += " я не совсем поняла, но могу тебя развлечь, если хочешь..."
-        bot.send_message(chat_id, reply)
+        name = user_names.get(user_id, "милый")
+        responses = [
+            f"Ты знаешь, {name}, я люблю, когда меня вызывают часто...",
+            "Спроси меня что-нибудь пикантное, я не укушу (пока)",
+            "Ты сегодня особенно возбуждающий...",
+            "Знаешь, у меня тоже есть фантазии. Хочешь узнать какие?",
+            "Я люблю, когда меня настраивают на волну удовольствия..."
+        ]
+        import random
+        bot.send_message(user_id, random.choice(responses))
 
+print("Бот запущен")
 bot.polling()
